@@ -1,10 +1,14 @@
 \documentclass{article}
 
+\usepackage{amsmath}
 \usepackage{biblatex}
+\usepackage[margin=1in]{geometry}
 \addbibresource{main.bib}
 
 \title{Learning SLAM}
 \author{Misha Wagner}
+
+\newcommand{\alignnote}[1]{\text{\footnotesize{#1}}}
 
 \begin{document}
 
@@ -18,22 +22,21 @@ and personal research}
 Simultaneous Localisation and Mapping, as it says on the tin, is a task where
 the goal is to simultaneously predict:
 \begin{itemize}
-  \item A map of the environment
-  \item An agent's location in the map
+  \item A map of the environment (denoted as state within $x$)
+  \item An agent's location in the map (denoted as state within $x$)
 \end{itemize}
 \dots given, at each timestep:
 \begin{itemize}
-  \item What the agent can see
-  \item How the agent is moving.
+  \item What the agent can see (denoted as $z$)
+  \item How the agent is moving (denoted as $u$)
 \end{itemize}
 
-In literature, the predicted map and location (the state) is denoted as $x$,
-what is seen is denoted as $z$, and how we move is denoted as $u$. Therefore,
-the SLAM problem is to find a way to calculate this function:
-\begin{equation}
-  p(x | z, u)
+Therefore, the SLAM problem is to find a way to calculate this function:
+\begin{equation}\label{slam}
+  p(x \vert z, u)
 \end{equation}
-\dots for any given $x, z, u$, and find the $x$ that maximises this function.
+\dots for any given $x, z, u$, and thus find the $x$ that maximises this
+function.
 
 \subsection{Representations}
 
@@ -48,18 +51,127 @@ TODO
 
 \section{SLAM algorithms}
 
-\subsection{Bayes filter}
+These algorithms are the core of SLAM\@. They show how to construct
+Equation~\ref{slam}, and how to optimize it.
 
-\subsection{Kalman filter}
+\subsection{Bayes filters}
 
-\subsection{Extended Kalman filter}
+\subsubsection{Bayes filter definition}
 
-\subsection{Unscented Kalman filter}
+Bayes filter is a transformation of the SLAM problem which allows us to solve
+it recursively. This means we can solve when $t=0$, then $t=1$, all the way to
+$t=T$.
 
-\subsection{Extended information filter}
+We start with Equation~\ref{slam}, but make time explicit:
+\begin{equation}
+  bel(x_t) = p(x_t \vert z_{0:t}, u_{0:t})
+\end{equation}
 
-\subsection{Sparse extended information filter}
+In English, this means that our belief in the state at time $t$ is the
+probability of that state occurring at $t$, given everything we've seen and how
+we've moved from the beginning of time to time $t$.
+
+We then modify this equation:
+\begin{align*}
+  bel(x_t) &= p(x_t \vert z_{0:t}, u_{0:t}) \\
+  &= \eta \cdot
+    p(z_t \vert x_t, z_{0:t-1}, u_{0:t}) \cdot
+    p(x_t \vert z_{0:t-1}, u_{0:t})
+           & \alignnote{Bayes (Eq.~\ref{bayes})} \\
+  &= \eta \cdot
+    p(z_t \vert x_t, u_t) \cdot
+    p(x_t \vert z_{0:t-1}, u_{0:t})
+           & \alignnote{Markov (Eq.~\ref{markov})} \\
+  &= \eta \cdot
+    p(z_t \vert x_t) \cdot
+    p(x_t \vert z_{0:t-1}, u_{0:t})
+           & \alignnote{Independence} \\
+  &= \eta \cdot
+    p(z_t \vert x_t) \cdot
+    \int_{x_{t-1}}
+      p(x_t \vert x_{t-1}, z_{0:t-1}, u_{0:t}) \cdot
+      p(x_{t-1} \vert z_{0:t-1}, u_{0:t})
+           & \alignnote{Total prob. (Eq.~\ref{totalprobability})} \\
+  &= \eta \cdot
+    p(z_t \vert x_t) \cdot
+    \int_{x_{t-1}}
+      p(x_t \vert x_{t-1}, u_{t}) \cdot
+      p(x_{t-1} \vert z_{0:t-1}, u_{0:t})
+           & \alignnote{Markov (Eq.~\ref{markov})} \\
+  &= \eta \cdot
+    p(z_t \vert x_t) \cdot
+    \int_{x_{t-1}}
+      p(x_t \vert x_{t-1}, u_{t}) \cdot
+      p(x_{t-1} \vert z_{0:t-1}, u_{0:t-1})
+           & \alignnote{Independence} \\
+  &= \eta \cdot
+    p(z_t \vert x_t) \cdot
+    \int_{x_{t-1}}
+      p(x_t \vert x_{t-1}, u_{t}) \cdot bel(x_{t-1})
+           & \alignnote{Recursion} \\
+\end{align*}
+
+The result of this transformation is an equation that makes intuitive sense.
+Our belief that we're in state $x_t$ is the combination of:
+\begin{itemize}
+  \item The probability of us seeing what we're seeing, given we're in state
+    $x_t$
+  \item The probability that we've moved to this state, given where we thought
+    we were previously
+\end{itemize}
+
+The new equation also allows us to solve $bel(x_T)$ recursively, and if we set
+the origin of our coordinate system to our initial position, the base case is
+trivial to solve.
+
+We can then break the equation into two steps:
+\begin{itemize}
+  \item Prediction step:
+    $\overline{bel}(x_t) = p(x_t \vert x_{t-1}, u_t)$
+  \item Correction step:
+    $\eta \cdot p(z_t \vert x_t) \cdot \overline{bel}(x_t)$
+\end{itemize}
+This results in two models we have to create:
+\begin{itemize}
+  \item Motion model: $p(x_t \vert x_{t-1}, u_t)$
+  \item Observation model: $p(z_t \vert x_t)$
+\end{itemize}
+
+These models aren't defined by the Bayes filter, and are instead defined by the
+other filters discussed in this section. Which one you choose to use, depends
+on the nature of the problem. For example, some filters deal with non-linear
+motion and observation models, and some are more performant than others.
+
+\subsubsection{Kalman filter}
+
+\subsubsection{Extended Kalman filter}
+
+\subsubsection{Unscented Kalman filter}
+
+\subsubsection{Extended information filter}
+
+\subsubsection{Sparse extended information filter}
+
+\subsection{Particle filters}
 
 \printbibliography{}
+
+\section{Miscellaneous}
+
+\subsection{Bayes' rule}
+\begin{equation}\label{bayes}
+  p(a \vert b) = \frac{p(b \vert a) \cdot p(a)}{p(b)}
+    = \eta \cdot p(b \vert a) \cdot p(a)
+\end{equation}
+
+\subsection{Markov assumption}
+\begin{equation}\label{markov}
+  p(x_t \vert x_{t-1}, x_{t-2}, \dots) = p(x_t \vert x_{t-1})
+\end{equation}
+
+\subsection{Law of total probability}
+\begin{equation}\label{totalprobability}
+  p(a \vert b) = \int_{c} p(a \vert b, c) \cdot p(c \vert b)
+\end{equation}
 
 \end{document}
