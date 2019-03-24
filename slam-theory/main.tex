@@ -1,9 +1,65 @@
 \documentclass{article}
+
+\usepackage{biblatex}
+\addbibresource{main.bib}
+
 \title{Learning SLAM}
 \author{Misha Wagner}
+
 \begin{document}
 
 \maketitle
-Hello, world!
+\abstract{High-level notes on how SLAM works, with an accompanying Rust
+implementation. Compiled from Cyrill Stachniss's course\cite{stachnisscourse}
+and personal research}
+
+\section{What is SLAM?}
+
+Simultaneous Localisation and Mapping, as it says on the tin, is a task where
+the goal is to simultaneously predict:
+\begin{itemize}
+  \item A map of the environment
+  \item An agent's location in the map
+\end{itemize}
+\dots given, at each timestep:
+\begin{itemize}
+  \item What the agent can see
+  \item How the agent is moving.
+\end{itemize}
+
+In literature, the predicted map and location (the state) is denoted as $x$,
+what is seen is denoted as $z$, and how we move is denoted as $u$. Therefore,
+the SLAM problem is to find a way to calculate this function:
+\begin{equation}
+  p(x | z, u)
+\end{equation}
+\dots for any given $x, z, u$, and find the $x$ that maximises this function.
+
+\subsection{Representations}
+
+How do we represent each of the map, location, what's seen, and how the agent
+is moving?
+
+TODO
+
+\subsection{Computation outline}
+
+\section{Feature detection}
+
+\section{SLAM algorithms}
+
+\subsection{Bayes filter}
+
+\subsection{Kalman filter}
+
+\subsection{Extended Kalman filter}
+
+\subsection{Unscented Kalman filter}
+
+\subsection{Extended information filter}
+
+\subsection{Sparse extended information filter}
+
+\printbibliography{}
 
 \end{document}
