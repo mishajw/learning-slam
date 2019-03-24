@@ -1,8 +1,9 @@
 \documentclass{article}
 
+\usepackage[margin=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{biblatex}
-\usepackage[margin=1in]{geometry}
+\usepackage[hidelinks]{hyperref}
 \addbibresource{main.bib}
 
 \title{Learning SLAM}
@@ -13,9 +14,12 @@
 \begin{document}
 
 \maketitle
+\tableofcontents
+\newpage
+
 \abstract{High-level notes on how SLAM works, with an accompanying Rust
 implementation. Compiled from Cyrill Stachniss's course\cite{stachnisscourse}
-and personal research}
+and personal research.}
 
 \section{What is SLAM?}
 
