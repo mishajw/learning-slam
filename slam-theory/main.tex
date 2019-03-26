@@ -181,7 +181,7 @@ The Kalman filter defines what we observe as:
   z_t &= C_t x_t + \delta_t \\
   \text{where }
   C_t &= \text{$(k \times n)$ matrix, describing what $z_t$ should be
-    observered from $x_t$} \\
+    observed from $x_t$} \\
   \delta_t &= \text{$k$-vector additive noise on the observations} \\
   \text{Resulting in the observation model:} \\
   p(z_t \vert x_t) &= \mathcal{N}(C_t x_t, \delta_t)
@@ -205,6 +205,46 @@ Applying the two Kalman models results in this algorithm:
 \todo{Understand and explain $K_t$ stages in Kalman filter}
 
 \subsubsection{Extended Kalman filter}
+
+The extended Kalman filter allows for non-linear, non-Gaussian motion and
+observation models. This is done through local linearisation of the motion and
+observation models using Jacobian matrices.
+
+To do this, we first change the definition of the Kalman filter's equations to
+allow for non-linear models:
+\begin{align*}
+  x_t = A_t x_{t-1} + B_t u_t + \epsilon_t &\Longrightarrow
+    x_t = g(x_{t-1}, u_t) + \epsilon_t \\
+  z_t = C_t x_t + \delta_t &\Longrightarrow
+    z_t = h(x_t) + \delta_t
+\end{align*}
+
+Next, we compute the Jacobian matrices of $h$ and $g$, $H_t$ and $G_t$. This
+computation must be done at every timestep, as where we localise changes
+between time steps. This means that the functions must be differentiable.
+
+As a result, we can change the Kalman filter algorithm in two ways:
+\begin{itemize}
+  \item Where we compute an updated mean (for either $x$ or $z$), we use the
+    $g$ and $h$ functions.
+  \item Where we compute an updated variance (for either $x$ or $z$), we use
+    the $H_t$ and $G_t$ matrices.
+\end{itemize}
+
+As a result, the extended Kalman filter algorithm is as so:
+\begin{algorithmic}[1]
+  \Procedure{ExtendedKalmanFilter}{$\mu_{t-1}, \Sigma_{t-1}, z_t, u_t$}
+    \State$\bar{\mu}_t = g(\mu_{t-1}, u_t)$
+      \Comment{Prediction step}
+    \State$\bar{\Sigma}_t = G_t \Sigma_{t-1}G_t^T + \epsilon_t$
+    \State$K_t =
+      \bar{\Sigma}_t H_t^T{(H_t \bar{\Sigma}_t H_t^T + \delta_t)}^{-1}$
+      \Comment{Correction step}
+    \State$\mu_t = \bar{\mu}_t + K_t(z_t - h(\bar{\mu_t}))$
+    \State$\Sigma_t = (I - K_t H_t)\hat{\Sigma}_t$
+    \State\Return$\mu_t, \Sigma_t$
+  \EndProcedure{}
+\end{algorithmic}
 
 \subsubsection{Unscented Kalman filter}
 
