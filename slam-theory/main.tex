@@ -4,11 +4,15 @@
 \usepackage{amsmath}
 \usepackage{biblatex}
 \usepackage[hidelinks]{hyperref}
+\usepackage{algorithmicx}
+\usepackage[noend]{algpseudocode}
+\usepackage{xcolor}
 \addbibresource{main.bib}
 
 \title{Learning SLAM}
 \author{Misha Wagner}
 
+\newcommand{\todo}[1]{\textcolor{red}{TODO:\@ #1}}
 \newcommand{\alignnote}[1]{\text{\footnotesize{#1}}}
 
 \begin{document}
@@ -47,7 +51,7 @@ function.
 How do we represent each of the map, location, what's seen, and how the agent
 is moving?
 
-TODO
+\todo{}
 
 \subsection{Computation outline}
 
@@ -147,6 +151,58 @@ on the nature of the problem. For example, some filters deal with non-linear
 motion and observation models, and some are more performant than others.
 
 \subsubsection{Kalman filter}
+
+The Kalman filter assumes that the motion and observation models are linear,
+and uses Gaussian distributions for noise. It is provably the best model for
+linear Gaussian SLAM problems.
+
+As motion and observation aren't often linear in reality, this model isn't
+often used. However, it lays the foundation for other models that can
+approximate non-linear functions.
+
+We define $n$ as the number of elements in the state $x$, $k$ as the number of
+observations returned at every step, and $l$ as the number of movement
+parameters at every step.
+
+The Kalman filter defines how we move as:
+\begin{align*}
+  x_t &= A_t x_{t-1} + B_t u_t + \epsilon_t \\
+  \text{where }
+  A_t &= \text{$(n \times n)$ matrix, mapping any natural movement in $x_{t-1}$
+    to $x_t$} \\
+  B_t &= \text{$(n \times l)$ matrix, describing how $u_t$ modifies $x_t$} \\
+  \epsilon_t &= \text{$n$-vector additive noise on the state} \\
+  \text{Resulting in the motion model:} \\
+  p(x_t \vert x_{t-1}, u_t) &= \mathcal{N}(A_t x_{t-1} + B_t u_t, \epsilon_t)
+\end{align*}
+
+The Kalman filter defines what we observe as:
+\begin{align*}
+  z_t &= C_t x_t + \delta_t \\
+  \text{where }
+  C_t &= \text{$(k \times n)$ matrix, describing what $z_t$ should be
+    observered from $x_t$} \\
+  \delta_t &= \text{$k$-vector additive noise on the observations} \\
+  \text{Resulting in the observation model:} \\
+  p(z_t \vert x_t) &= \mathcal{N}(C_t x_t, \delta_t)
+\end{align*}
+
+Applying the two Kalman models results in this algorithm:
+\begin{algorithmic}[1]
+  \Procedure{KalmanFilter}{$\mu_{t-1}, \Sigma_{t-1}, z_t, u_t$}
+    \State$\bar{\mu}_t = A_t \mu_{t-1} + B_t u_t$
+      \Comment{Prediction step}
+    \State$\bar{\Sigma}_t = A_t \Sigma_{t-1}A_t^T + \epsilon_t$
+    \State$K_t =
+      \bar{\Sigma}_t C_t^T{(C_t \bar{\Sigma}_t C_t^T + \delta_t)}^{-1}$
+      \Comment{Correction step}
+    \State$\mu_t = \bar{\mu}_t + K_t(z_t - C_t \bar{\mu_t})$
+    \State$\Sigma_t = (I - K_t C_t)\hat{\Sigma}_t$
+    \State\Return$\mu_t, \Sigma_t$
+  \EndProcedure{}
+\end{algorithmic}
+
+\todo{Understand and explain $K_t$ stages in Kalman filter}
 
 \subsubsection{Extended Kalman filter}
 
