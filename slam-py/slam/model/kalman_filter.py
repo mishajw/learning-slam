@@ -54,12 +54,15 @@ class KalmanFilter(Slam):
         self.state_mean = state_mean + kalman_gain.dot(
             observations - self.observation_transition.dot(state_mean)
         )
-        self.state_variance = (np.eye(self.num_states) - kalman_gain.dot(
-            self.observation_transition
-        )).dot(state_variance)
-
-    def get_map(self) -> List[np.array]:
-        return []
+        self.state_variance = (
+            np.eye(self.num_states) - kalman_gain.dot(self.observation_transition)
+        ).dot(state_variance)
 
     def get_location(self) -> List[np.array]:
         return self.state_mean
+
+    def get_location_variance(self) -> np.array:
+        return self.state_variance
+
+    def get_map(self) -> List[np.array]:
+        return []

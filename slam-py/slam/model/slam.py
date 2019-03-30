@@ -8,10 +8,18 @@ class Slam:
         """Update predictions based on new observations and motion"""
         raise NotImplemented()
 
+    def get_location(self) -> np.array:
+        """Get the predicted location"""
+        raise NotImplemented()
+
+    def get_location_variance(self) -> np.array:
+        """Get the predicted location covariance"""
+        raise NotImplemented()
+
     def get_map(self) -> List[np.array]:
         """Get the predicted map"""
         raise NotImplemented()
 
-    def get_location(self) -> np.array:
-        """Get the predicted location"""
+    def get_map_variance(self) -> List[np.array]:
+        """Get the predicted map covariance"""
         raise NotImplemented()
