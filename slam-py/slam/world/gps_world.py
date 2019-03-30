@@ -3,6 +3,7 @@ from . import World
 from typing import List
 import numpy as np
 
+
 class GpsWorld(World):
     def __init__(self):
         self.location = np.zeros(2)

@@ -42,7 +42,11 @@ def draw(model: Slam, world: World, step_iter: Iterator[int]):
     def draw_location(location: np.array, color):
         nonlocal surface
         pygame.draw.circle(
-            surface, color, scale_location(location), LOCATION_RADIUS, LOCATION_RADIUS
+            surface,
+            color,
+            scale_location(location),
+            LOCATION_RADIUS,
+            LOCATION_RADIUS,
         )
 
     def draw_variance(location: np.array, variance: np.array, color):
@@ -71,7 +75,9 @@ def draw(model: Slam, world: World, step_iter: Iterator[int]):
         model_map = model.get_map()
         world_location = world.get_location()
         world_map = world.get_map()
-        draw_variance(model_location, model_location_variance, MODEL_LOCATION_COLOR)
+        draw_variance(
+            model_location, model_location_variance, MODEL_LOCATION_COLOR
+        )
         draw_location(model_location, MODEL_LOCATION_COLOR)
         draw_location(world_location, WORLD_LOCATION_COLOR)
         # TODO: Draw landmarks

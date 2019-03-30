@@ -1,6 +1,7 @@
 from typing import List
 import numpy as np
 
+
 class Slam:
     """Model that performs Simultaneous Localisation and Mapping (SLAM)"""
 
