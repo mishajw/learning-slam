@@ -7,20 +7,20 @@ class Slam:
 
     def step(self, motion: np.array, observations: np.array):
         """Update predictions based on new observations and motion"""
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_location(self) -> np.array:
         """Get the predicted location"""
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_location_variance(self) -> np.array:
         """Get the predicted location covariance"""
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_map(self) -> List[np.array]:
         """Get the predicted map"""
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_map_variance(self) -> List[np.array]:
         """Get the predicted map covariance"""
-        raise NotImplemented()
+        raise NotImplementedError()
